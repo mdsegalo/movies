@@ -84,7 +84,7 @@ a{color:var(--acc)}
 <div class="toast" id="toast"><span id="toast-t"></span><button id="toast-u" style="display:none">Undo</button></div>
 <script>
 "use strict";
-const APP_VERSION = "1.0.0";
+const APP_VERSION = "1.1.0";
 const LS = { state: "movies_state", cat: "movies_cat", sync: "movies_sync", token: "movies_gh_token", ui: "movies_ui" };
 const DATA_REPO = "mdsegalo/movies-data";
 const $ = s => document.querySelector(s);
@@ -105,25 +105,32 @@ function saveUI() { lsSet(LS.ui, UI); }
 function mark(id) { const m = S.marks[id]; return m && m.st ? m : null; }
 
 /* ---------- catalog ---------- */
+/* Storage keys (movies_gh_token, movies_state, movies_cat, movies_sync, movies_ui) are stable across versions: never rename them.
+   With a token, the app NEVER falls back to the demo list: a failed or invalid private fetch keeps the cached private copy and shows the error. */
+let CAT_ERR = null;
+function validCat(j) { return j && typeof j === "object" && j.catalog && typeof j.catalog === "object" && Array.isArray(j.family) && j.family.length > 0 && j.family.every(id => j.catalog[id]); }
 async function loadCatalog() {
-  try {
-    let j;
-    if (token()) {
+  if (token()) {
+    if (CAT && CAT.demo) { CAT = null; }   // never show demo data on a device that has a token
+    try {
       const r = await ghReq("GET", "data/movies.json", null, { raw: true });
       if (!r.ok) throw await ghErr(r);
-      j = await r.json(); CAT_SRC = "private";
-    } else {
-      const r = await fetch("data/movies.json?t=" + Date.now(), { cache: "no-store" });
-      j = await r.json(); j.demo = true; CAT_SRC = "demo";
+      let j; try { j = JSON.parse(await r.text()); } catch (e) { throw new Error("Your list file (data/movies.json) didn't parse. Keeping the last good copy."); }
+      if (!validCat(j)) throw new Error("Your list file (data/movies.json) is incomplete. Keeping the last good copy.");
+      delete j.demo; CAT = j; CAT_SRC = "private"; CAT_ERR = null; lsSet(LS.cat, j);
+    } catch (e) {
+      CAT_ERR = e && e.name === "AbortError" ? "GitHub didn't answer. Showing your saved copy." : (e && e.message) || String(e);
+      CAT_SRC = CAT ? "private-cache" : "none";
+      clearTimeout(window._catRetry); window._catRetry = setTimeout(loadCatalog, 60000);
     }
-    if (j && j.catalog) { CAT = j; lsSet(LS.cat, j); }
-  } catch (e) {
-    if (!CAT) { try { const r = await fetch("data/movies.json"); CAT = await r.json(); CAT.demo = true; CAT_SRC = "demo"; } catch (e2) {} }
-    CAT_ERR = (e && e.message) || String(e);
+  } else {
+    try {
+      const r = await fetch("data/movies.json?t=" + Date.now(), { cache: "no-store" });
+      const j = await r.json(); if (validCat(j)) { j.demo = true; CAT = j; CAT_SRC = "demo"; CAT_ERR = null; }
+    } catch (e) { CAT_ERR = (e && e.message) || String(e); }
   }
   render();
 }
-let CAT_ERR = null;
 function movie(id) { return CAT && CAT.catalog[id]; }
 function listFor(kind) {
   if (!CAT) return [];
@@ -134,8 +141,14 @@ function listFor(kind) {
   }
   return (CAT.solo || []).concat(CAT.soloReserve || []).filter(id => movie(id) && !mark(id)).map((id, i) => ({ id, rank: i + 1 }));
 }
-function decadeOf(y) { y = +y; return y < 1960 ? "Pre-60s" : y < 1970 ? "60s" : y < 1980 ? "70s" : y < 1990 ? "80s" : y < 2000 ? "90s" : y < 2010 ? "2000s" : y < 2020 ? "2010s" : "2020s"; }
-const DECS = ["Pre-60s", "60s", "70s", "80s", "90s", "2000s", "2010s", "2020s"];
+function decadeOf(y) { y = +y; return y < 1980 ? "Pre-1980" : y < 1990 ? "80s" : y < 2000 ? "90s" : y < 2010 ? "2000s" : y < 2020 ? "2010s" : "2020s"; }
+const DECS = ["Pre-1980", "80s", "90s", "2000s", "2010s", "2020s"];
+/* Decade pool: every unmarked family pick (top list + reserve) from that decade, in rank order, not just those inside the 100. */
+function decadePool(dec) {
+  if (!CAT) return [];
+  const fromRes = new Set(CAT.reserve || []), top = new Set(listFor("family").map(x => x.id));
+  return (CAT.family || []).concat(CAT.reserve || []).filter(id => movie(id) && !mark(id) && decadeOf(movie(id).y) === dec).map((id, i) => ({ id, rank: i + 1, backfill: fromRes.has(id) && top.has(id), deep: !top.has(id) }));
+}
 const SERVICES = ["Netflix", "Max", "Disney+", "Prime Video", "Paramount+", "Peacock", "Hulu", "Apple TV+", "Starz", "MGM+", "AMC+", "Kanopy", "Hoopla", "Free"];
 function isFlag(note) { return /nudity|sexual|topless|innuendo|implied|skip|underwear|rated r/i.test(note || ""); }
 
@@ -146,21 +159,27 @@ function render() {
   const asOf = CAT && CAT.streamingAsOf ? fmtMonth(CAT.streamingAsOf) : "";
   $("#h-title").textContent = { family: "Family Top 100", watched: "Watched", solo: "Solo picks", settings: "Settings" }[t];
   $("#h-sub").textContent = t === "settings" ? "Version " + APP_VERSION : t === "watched" ? "Family and solo history" : (asOf ? "Streaming as of " + asOf : "");
+  if ((t === "family" || t === "solo" || t === "watched") && !CAT) { $("#main").innerHTML = demoBanner() + `<div class="empty">Loading your list…</div>`; return; }
   if (t === "family" || t === "solo") renderList(t);
   else if (t === "watched") renderWatched();
   else renderSettings();
 }
 function fmtMonth(iso) { const d = new Date(iso + "T12:00:00"); return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }); }
 function fmtDate(s) { return /^\d{4}-\d{2}-\d{2}$/.test(s || "") ? fmtMonth(s) : (s || ""); }
-function demoBanner() { return CAT && CAT.demo ? `<div class="banner">Demo mode: add your sync token in Settings to load your full list.</div>` : ""; }
+function demoBanner() {
+  if (token() && CAT_ERR) return `<div class="banner">Couldn't refresh your list: ${esc(CAT_ERR)}${CAT ? " Showing your saved copy." : ""} <a href="#" data-act="refresh">Retry</a></div>`;
+  return CAT && CAT.demo ? `<div class="banner">Demo mode: no sync token on this device. Paste it in Settings. (Safari and the home-screen app keep separate storage, so each needs the token once.)</div>` : "";
+}
 function renderList(kind) {
   const f = UI.f[kind] || (UI.f[kind] = {});
-  const items = listFor(kind);
-  const genres = [...new Set(items.map(x => movie(x.id).g))].sort();
+  if (f.dec && !DECS.includes(f.dec)) f.dec = "";
+  const pooled = kind === "family" && f.dec;
+  const items = pooled ? decadePool(f.dec) : listFor(kind);
+  const genres = [...new Set((pooled ? listFor(kind).concat(items) : items).map(x => movie(x.id).g))].sort();
   const q = (f.q || "").trim().toLowerCase();
   const shown = items.filter(x => {
     const m = movie(x.id);
-    if (f.dec && decadeOf(m.y) !== f.dec) return false;
+    if (f.dec && !pooled && decadeOf(m.y) !== f.dec) return false;
     if (f.g && m.g !== f.g) return false;
     if (f.s === "rent" && m.s.length) return false;
     if (f.s && f.s !== "rent" && !m.s.includes(f.s)) return false;
@@ -179,7 +198,7 @@ function renderList(kind) {
       <button class="chip${f.disc ? " on" : ""}" data-act="disc">Disc (Blu-ray+)</button>
       ${any ? `<button class="chip" data-act="clear">Clear</button>` : ""}
     </div>
-    <div class="count">${shown.length === items.length ? items.length + " movies" : shown.length + " of " + items.length}${kind === "family" ? " · tap one to mark watched" : ""}</div>
+    <div class="count">${pooled ? `${f.dec}: ${shown.length === items.length ? items.length : shown.length + " of " + items.length} unwatched picks, ranked` : (shown.length === items.length ? items.length + " movies" : shown.length + " of " + items.length)}${kind === "family" ? " · tap one to mark watched" : ""}</div>
     ${shown.map(x => cardHTML(x, kind)).join("") || `<div class="empty">Nothing matches these filters.</div>`}`;
   $("#q").addEventListener("input", e => { f.q = e.target.value; saveUI(); clearTimeout(window._qt); window._qt = setTimeout(() => { const pos = e.target.selectionStart; renderList(kind); const el = $("#q"); el.focus(); try { el.setSelectionRange(pos, pos); } catch (er) {} }, 180); });
   document.querySelectorAll("select[data-f]").forEach(s => s.addEventListener("change", () => { f[s.dataset.f] = s.value; saveUI(); renderList(kind); }));
@@ -195,7 +214,7 @@ function cardHTML(x, kind) {
       <div class="meta">${esc(m.y)} · ${esc(m.r || "NR")} · ${esc(m.g)}</div>
       <div class="why">${esc(m.why)}</div>
       <div class="note">${flag ? "<b>Heads up:</b> " : (kind === "solo" ? "Content: " : "Parents: ")}${esc(m.note)}</div>
-      <div class="tags">${x.backfill ? `<span class="tag new">New pick</span>` : ""}${streamTags(m)}<span class="tag disc">${esc(m.disc === "check" ? "Disc: check" : m.disc)}</span></div>
+      <div class="tags">${x.backfill ? `<span class="tag new">New pick</span>` : ""}${x.deep ? `<span class="tag rent">Beyond the 100</span>` : ""}${streamTags(m)}<span class="tag disc">${esc(m.disc === "check" ? "Disc: check" : m.disc)}</span></div>
     </div></div>`;
 }
 function watchedEntries() {
@@ -216,7 +235,8 @@ function renderWatched() {
       <div class="tt">${esc(e.t)} <span class="muted small">${esc(e.y || "")}</span></div>
       <div class="meta">${esc(e.mk.st === "s" ? "Seen earlier" : fmtDate(e.mk.date))}${e.mk.who ? " · " + esc(e.mk.who) : ""}${e.list === "solo" ? " · Solo" : ""}</div>
       ${e.mk.stars ? `<div class="stars">${"★".repeat(e.mk.stars)}<span style="color:#444">${"★".repeat(5 - e.mk.stars)}</span></div>` : ""}
-      ${e.mk.note ? `<div class="note">${esc(e.mk.note)}</div>` : ""}</div></div>`;
+      ${e.mk.note ? `<div class="note">${esc(e.mk.note)}</div>` : ""}
+      ${movie(e.id) ? `<div class="tags">${streamTags(movie(e.id))}<span class="tag disc">${esc(movie(e.id).disc === "check" ? "Disc: check" : movie(e.id).disc)}</span></div>` : ""}</div></div>`;
   $("#main").innerHTML = demoBanner() +
     `<div class="count">${mine.length + seeds.length} watched</div>` +
     (mine.length ? `<div class="sec">In this app</div>` + mine.map(row).join("") : "") +
@@ -277,21 +297,34 @@ function watchForm(prev) {
     <label class="f">Note</label><textarea class="in" id="w-note" rows="2" placeholder="Optional">${esc(p.note || "")}</textarea>
     <div class="row"><button class="btn pri full" data-act="save-watch">Save</button></div>`;
 }
+function whereHTML(m, label) {
+  if (!m) return "";
+  return `<div class="sec" style="margin-top:12px">${label || "Watch again"}</div>
+    <div class="tags">${streamTags(m)}<span class="tag disc">${esc(m.disc === "check" ? "Disc: check" : m.disc)}</span></div>
+    ${m.jw ? `<div class="small" style="margin-top:8px"><a href="${esc(m.jw)}" target="_blank" rel="noopener">Where to watch on JustWatch ↗</a></div>` : ""}`;
+}
+function infoHTML(m) {
+  if (!m) return "";
+  return `${m.why ? `<div class="why" style="margin:8px 0">${esc(m.why)}</div>` : ""}${m.note ? `<div class="note">Parents: ${esc(m.note)}</div>` : ""}`;
+}
 function openWatched(id) {
   const mk = S.marks[id], m = movie(id), seed = ((CAT && CAT.seedWatched) || []).find(s => s.id === id);
   if (seed && !mark(id)) {
     SHEET = { id, seed: true };
-    openSheet(`<h2>${esc(seed.t)}</h2><div class="meta">${esc(seed.y)} · ${esc(seed.date)}</div>${seed.note ? `<div class="note">${esc(seed.note)}</div>` : ""}
-      <div class="row"><button class="btn dan full" data-act="hide-seed">Remove from history</button></div>`);
+    openSheet(`<h2>${esc(seed.t)}</h2><div class="meta">${esc(seed.y)}${m && m.r ? " · " + esc(m.r) : ""} · ${esc(seed.date)}</div>${seed.note ? `<div class="note">${esc(seed.note)}</div>` : ""}
+      ${whereHTML(m)}
+      <div class="row" style="margin-top:16px"><button class="btn dan full" data-act="hide-seed">Remove from history</button></div>`);
     return;
   }
   if (!mk) return;
   SHEET = { id, kind: mk.list || "family", stars: mk.stars || 0, who: mk.who || "Family", editing: true };
   if (mk.st === "x") {
-    openSheet(`<h2>${esc(m.t)}</h2><div class="meta">Marked not interested</div><div class="row"><button class="btn pri full" data-act="unmark">Bring it back</button></div>`);
+    openSheet(`<h2>${esc(m.t)}</h2><div class="meta">${esc(m.y)} · ${esc(m.r || "NR")} · Marked not interested</div>${infoHTML(m)}${whereHTML(m, "Where to watch")}<div class="row" style="margin-top:14px"><button class="btn pri full" data-act="unmark">Bring it back</button></div>`);
     return;
   }
-  openSheet(`<h2>${esc(m ? m.t : mk.t)}</h2><div class="meta">${esc(m ? m.y : "")} · ${mk.st === "s" ? "Seen earlier" : "Watched " + esc(fmtDate(mk.date))}</div>
+  openSheet(`<h2>${esc(m ? m.t : mk.t)}</h2><div class="meta">${esc(m ? m.y : "")}${m && m.r ? " · " + esc(m.r) : ""} · ${mk.st === "s" ? "Seen earlier" : "Watched " + esc(fmtDate(mk.date))}</div>
+    ${infoHTML(m)}${whereHTML(m)}
+    <div class="sec">Your log</div>
     ${watchForm(mk)}
     <div class="row"><button class="btn dan full" data-act="unmark">Unwatch (put it back on the list)</button></div>`);
 }
@@ -331,8 +364,8 @@ document.addEventListener("click", e => {
   else if (act === "hide-seed") { const s = CAT.seedWatched.find(x => x.id === SHEET.id); setMark(SHEET.id, { st: "h", t: s.t, y: s.y }, "Removed from history"); }
   else if (act === "tok-save") syncSaveSettings();
   else if (act === "tok-test") syncTest();
-  else if (act === "tok-forget") syncForget();
-  else if (act === "refresh") { toast("Refreshing…"); pullState().finally(loadCatalog); }
+  else if (act === "tok-forget") { if (confirm("Remove the sync token from this device? The app will switch to the demo list until you paste it again.")) syncForget(); }
+  else if (act === "refresh") { e.preventDefault(); toast("Refreshing…"); pullState().finally(loadCatalog); }
   else if (act === "export") exportJSON();
 });
 function exportJSON() {
