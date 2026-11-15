@@ -49,6 +49,7 @@ nav button.on{color:var(--acc)}
 .sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:10;display:none}
 .sheet{position:fixed;left:0;right:0;bottom:0;z-index:11;background:#15151c;border-radius:18px 18px 0 0;border-top:1px solid var(--line);max-height:88vh;overflow:auto;padding:14px 16px calc(18px + env(safe-area-inset-bottom));transform:translateY(105%);transition:transform .22s ease;max-width:720px;margin:0 auto}
 .sheet.open{transform:none}
+.x{position:absolute;top:8px;right:10px;background:var(--card2);border:1px solid var(--line);color:var(--tx);width:32px;height:32px;border-radius:16px;font-size:20px;line-height:1}
 .grab{width:40px;height:4px;border-radius:2px;background:#444;margin:0 auto 10px}
 .sheet h2{margin:0 0 2px;font-size:20px}
 .row{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
@@ -84,7 +85,7 @@ a{color:var(--acc)}
 <div class="toast" id="toast"><span id="toast-t"></span><button id="toast-u" style="display:none">Undo</button></div>
 <script>
 "use strict";
-const APP_VERSION = "1.1.0";
+const APP_VERSION = "1.1.1";
 const LS = { state: "movies_state", cat: "movies_cat", sync: "movies_sync", token: "movies_gh_token", ui: "movies_ui" };
 const DATA_REPO = "mdsegalo/movies-data";
 const $ = s => document.querySelector(s);
@@ -272,7 +273,7 @@ function renderSettings() {
 
 /* ---------- sheets ---------- */
 let SHEET = null;
-function openSheet(html) { const sh = $("#sheet"); sh.innerHTML = `<div class="grab"></div>` + html; $("#sheet-bg").style.display = "block"; requestAnimationFrame(() => sh.classList.add("open")); }
+function openSheet(html) { const sh = $("#sheet"); sh.innerHTML = `<div class="grab"></div><button class="x" data-act="close" aria-label="Close">×</button>` + html; $("#sheet-bg").style.display = "block"; requestAnimationFrame(() => sh.classList.add("open")); }
 function closeSheet() { $("#sheet").classList.remove("open"); $("#sheet-bg").style.display = "none"; SHEET = null; }
 function openMovie(id, kind) {
   const m = movie(id); if (!m) return;
@@ -349,6 +350,7 @@ document.addEventListener("click", e => {
   const wc = e.target.closest("[data-wopen]"); if (wc) { openWatched(wc.dataset.wopen); return; }
   const a = e.target.closest("[data-act]"); if (!a) return;
   const act = a.dataset.act, kind = UI.tab, f = UI.f[kind] || {};
+  if (act === "close") { closeSheet(); return; }
   if (act === "disc") { f.disc = !f.disc; saveUI(); renderList(kind); }
   else if (act === "clear") { UI.f[kind] = {}; saveUI(); renderList(kind); }
   else if (act === "show-watch") { $("#wform").innerHTML = watchForm(null); a.parentElement.style.display = "none"; }
