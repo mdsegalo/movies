@@ -1,0 +1,451 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0b10">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Movies">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icons/icon-192.png">
+<title>Movie Night</title>
+<style>
+:root{--bg:#0b0b10;--card:#16161e;--card2:#1e1e28;--line:#2a2a36;--tx:#f2f2f5;--mut:#9a9aab;--acc:#f5c518;--ok:#4cd480;--bad:#ff6b6b;--warn:#ffb347;--r:14px}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text",Segoe UI,Roboto,sans-serif}
+body{padding:env(safe-area-inset-top) 0 calc(70px + env(safe-area-inset-bottom))}
+header{position:sticky;top:0;z-index:5;background:rgba(11,11,16,.94);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);padding:10px 14px 8px;border-bottom:1px solid var(--line)}
+h1{font-size:22px;margin:0 0 2px;letter-spacing:-.3px}
+.sub{color:var(--mut);font-size:12.5px}
+main{padding:10px 12px 20px;max-width:720px;margin:0 auto}
+.search{width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--tx);font-size:16px;margin:8px 0 6px}
+.filters{display:flex;flex-wrap:wrap;gap:6px}
+.filters select,.btn,.chip{appearance:none;-webkit-appearance:none;border:1px solid var(--line);background:var(--card);color:var(--tx);border-radius:999px;padding:7px 12px;font-size:13.5px}
+.filters select{padding-right:22px;background-image:linear-gradient(45deg,transparent 50%,var(--mut) 50%),linear-gradient(135deg,var(--mut) 50%,transparent 50%);background-position:calc(100% - 12px) 50%,calc(100% - 8px) 50%;background-size:4px 4px;background-repeat:no-repeat}
+.chip.on{background:var(--acc);color:#111;border-color:var(--acc);font-weight:600}
+.count{color:var(--mut);font-size:12.5px;margin:8px 2px}
+.card{display:flex;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:11px 12px;margin:8px 0;cursor:pointer}
+.card:active{background:var(--card2)}
+.rank{min-width:30px;font-weight:700;color:var(--acc);font-size:17px;text-align:right}
+.body{flex:1;min-width:0}
+.tt{font-weight:650;font-size:15.5px}
+.meta{color:var(--mut);font-size:12.5px;margin:1px 0 4px}
+.why{font-size:13.5px}
+.note{font-size:12.5px;color:var(--mut);margin-top:3px}
+.note b{color:var(--warn);font-weight:600}
+.tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.tag{font-size:11.5px;padding:2px 7px;border-radius:6px;background:var(--card2);border:1px solid var(--line);color:var(--tx)}
+.tag.disc{border-color:#5a4a10;color:var(--acc)}
+.tag.rent{color:var(--mut)}
+.tag.new{background:var(--acc);color:#111;border-color:var(--acc);font-weight:600}
+.stars{color:var(--acc);letter-spacing:1px}
+nav{position:fixed;left:0;right:0;bottom:0;z-index:6;display:flex;background:rgba(18,18,24,.97);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;background:none;border:0;color:var(--mut);padding:9px 0 8px;font-size:11.5px;display:flex;flex-direction:column;align-items:center;gap:2px}
+nav button .i{font-size:19px;line-height:1}
+nav button.on{color:var(--acc)}
+.sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:10;display:none}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:11;background:#15151c;border-radius:18px 18px 0 0;border-top:1px solid var(--line);max-height:88vh;overflow:auto;padding:14px 16px calc(18px + env(safe-area-inset-bottom));transform:translateY(105%);transition:transform .22s ease;max-width:720px;margin:0 auto}
+.sheet.open{transform:none}
+.grab{width:40px;height:4px;border-radius:2px;background:#444;margin:0 auto 10px}
+.sheet h2{margin:0 0 2px;font-size:20px}
+.row{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.btn{padding:10px 14px;font-size:14.5px;border-radius:12px}
+.btn.pri{background:var(--acc);color:#111;border-color:var(--acc);font-weight:650}
+.btn.dan{color:var(--bad)}
+.btn.full{flex:1;text-align:center}
+label.f{display:block;font-size:12.5px;color:var(--mut);margin:10px 0 4px}
+input.in,textarea.in{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--tx);font-size:16px;font-family:inherit}
+.starpick button{background:none;border:0;font-size:28px;color:#555;padding:0 4px}
+.starpick button.on{color:var(--acc)}
+.sec{font-size:13px;color:var(--mut);text-transform:uppercase;letter-spacing:.6px;margin:18px 2px 4px}
+.box{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px;margin:8px 0}
+.small{font-size:12.5px}.muted{color:var(--mut)}.syncbad{color:var(--bad)}
+.banner{background:#2a2410;border:1px solid #5a4a10;color:#ffe08a;border-radius:12px;padding:9px 12px;font-size:13px;margin:8px 0}
+.toast{position:fixed;left:50%;bottom:calc(80px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#2b2b36;color:#fff;padding:10px 14px;border-radius:12px;z-index:20;display:none;align-items:center;gap:12px;font-size:14px;max-width:92vw;box-shadow:0 6px 20px rgba(0,0,0,.4)}
+.toast button{background:none;border:0;color:var(--acc);font-weight:700;font-size:14px}
+a{color:var(--acc)}
+.empty{color:var(--mut);text-align:center;padding:30px 10px}
+</style>
+</head>
+<body>
+<header><h1 id="h-title">Movie Night</h1><div class="sub" id="h-sub"></div></header>
+<main id="main"></main>
+<nav id="nav">
+  <button data-tab="family"><span class="i">🎬</span>Family</button>
+  <button data-tab="watched"><span class="i">✓</span>Watched</button>
+  <button data-tab="solo"><span class="i">🍿</span>Solo</button>
+  <button data-tab="settings"><span class="i">⚙︎</span>Settings</button>
+</nav>
+<div class="sheet-bg" id="sheet-bg"></div>
+<div class="sheet" id="sheet"></div>
+<div class="toast" id="toast"><span id="toast-t"></span><button id="toast-u" style="display:none">Undo</button></div>
+<script>
+"use strict";
+const APP_VERSION = "1.0.0";
+const LS = { state: "movies_state", cat: "movies_cat", sync: "movies_sync", token: "movies_gh_token", ui: "movies_ui" };
+const DATA_REPO = "mdsegalo/movies-data";
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const today = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
+function lsGet(k, def) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : def; } catch (e) { return def; } }
+function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+function token() { try { return localStorage.getItem(LS.token) || ""; } catch (e) { return ""; } }
+
+/* ---------- state ----------
+   S.marks[id] = { st: "w" (watched) | "s" (seen already) | "x" (not interested) | "h" (hidden seed) | null (undone), date, who, stars, note, list, at }
+   Merge rule across devices: per id, the entry with the larger `at` wins. */
+let S = Object.assign({ v: 1, marks: {} }, lsGet(LS.state, {}));
+let UI = Object.assign({ tab: "family", f: { family: {}, solo: {} } }, lsGet(LS.ui, {}));
+let CAT = lsGet(LS.cat, null), CAT_SRC = CAT ? (CAT.demo ? "demo-cache" : "private-cache") : "none";
+function save() { lsSet(LS.state, S); syncNoteChange(); }
+function saveUI() { lsSet(LS.ui, UI); }
+function mark(id) { const m = S.marks[id]; return m && m.st ? m : null; }
+
+/* ---------- catalog ---------- */
+async function loadCatalog() {
+  try {
+    let j;
+    if (token()) {
+      const r = await ghReq("GET", "data/movies.json", null, { raw: true });
+      if (!r.ok) throw await ghErr(r);
+      j = await r.json(); CAT_SRC = "private";
+    } else {
+      const r = await fetch("data/movies.json?t=" + Date.now(), { cache: "no-store" });
+      j = await r.json(); j.demo = true; CAT_SRC = "demo";
+    }
+    if (j && j.catalog) { CAT = j; lsSet(LS.cat, j); }
+  } catch (e) {
+    if (!CAT) { try { const r = await fetch("data/movies.json"); CAT = await r.json(); CAT.demo = true; CAT_SRC = "demo"; } catch (e2) {} }
+    CAT_ERR = (e && e.message) || String(e);
+  }
+  render();
+}
+let CAT_ERR = null;
+function movie(id) { return CAT && CAT.catalog[id]; }
+function listFor(kind) {
+  if (!CAT) return [];
+  if (kind === "family") {
+    const all = (CAT.family || []).concat(CAT.reserve || []);
+    const fromRes = new Set(CAT.reserve || []);
+    return all.filter(id => movie(id) && !mark(id)).slice(0, CAT.familySize || 100).map((id, i) => ({ id, rank: i + 1, backfill: fromRes.has(id) }));
+  }
+  return (CAT.solo || []).concat(CAT.soloReserve || []).filter(id => movie(id) && !mark(id)).map((id, i) => ({ id, rank: i + 1 }));
+}
+function decadeOf(y) { y = +y; return y < 1960 ? "Pre-60s" : y < 1970 ? "60s" : y < 1980 ? "70s" : y < 1990 ? "80s" : y < 2000 ? "90s" : y < 2010 ? "2000s" : y < 2020 ? "2010s" : "2020s"; }
+const DECS = ["Pre-60s", "60s", "70s", "80s", "90s", "2000s", "2010s", "2020s"];
+const SERVICES = ["Netflix", "Max", "Disney+", "Prime Video", "Paramount+", "Peacock", "Hulu", "Apple TV+", "Starz", "MGM+", "AMC+", "Kanopy", "Hoopla", "Free"];
+function isFlag(note) { return /nudity|sexual|topless|innuendo|implied|skip|underwear|rated r/i.test(note || ""); }
+
+/* ---------- render ---------- */
+function render() {
+  document.querySelectorAll("nav button").forEach(b => b.classList.toggle("on", b.dataset.tab === UI.tab));
+  const t = UI.tab;
+  const asOf = CAT && CAT.streamingAsOf ? fmtMonth(CAT.streamingAsOf) : "";
+  $("#h-title").textContent = { family: "Family Top 100", watched: "Watched", solo: "Solo picks", settings: "Settings" }[t];
+  $("#h-sub").textContent = t === "settings" ? "Version " + APP_VERSION : t === "watched" ? "Family and solo history" : (asOf ? "Streaming as of " + asOf : "");
+  if (t === "family" || t === "solo") renderList(t);
+  else if (t === "watched") renderWatched();
+  else renderSettings();
+}
+function fmtMonth(iso) { const d = new Date(iso + "T12:00:00"); return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }); }
+function fmtDate(s) { return /^\d{4}-\d{2}-\d{2}$/.test(s || "") ? fmtMonth(s) : (s || ""); }
+function demoBanner() { return CAT && CAT.demo ? `<div class="banner">Demo mode: add your sync token in Settings to load your full list.</div>` : ""; }
+function renderList(kind) {
+  const f = UI.f[kind] || (UI.f[kind] = {});
+  const items = listFor(kind);
+  const genres = [...new Set(items.map(x => movie(x.id).g))].sort();
+  const q = (f.q || "").trim().toLowerCase();
+  const shown = items.filter(x => {
+    const m = movie(x.id);
+    if (f.dec && decadeOf(m.y) !== f.dec) return false;
+    if (f.g && m.g !== f.g) return false;
+    if (f.s === "rent" && m.s.length) return false;
+    if (f.s && f.s !== "rent" && !m.s.includes(f.s)) return false;
+    if (f.disc && !(m.disc === "4K UHD" || m.disc === "Blu-ray")) return false;
+    if (q && !(m.t + " " + m.why + " " + m.g + " " + m.y).toLowerCase().includes(q)) return false;
+    return true;
+  });
+  const sel = (key, label, opts) => `<select data-f="${key}" aria-label="${label}"><option value="">${label}</option>${opts.map(o => `<option value="${esc(o[0])}"${(f[key] || "") === o[0] ? " selected" : ""}>${esc(o[1])}</option>`).join("")}</select>`;
+  const any = f.dec || f.g || f.s || f.disc || q;
+  $("#main").innerHTML = demoBanner() + `
+    <input class="search" id="q" type="search" placeholder="Search ${kind === "family" ? "the top 100" : "solo picks"}" value="${esc(f.q || "")}">
+    <div class="filters">
+      ${sel("dec", "Decade", DECS.map(d => [d, d]))}
+      ${sel("g", "Genre", genres.map(g => [g, g]))}
+      ${sel("s", "Streaming", SERVICES.map(s => [s, s]).concat([["rent", "Rent/buy only"]]))}
+      <button class="chip${f.disc ? " on" : ""}" data-act="disc">Disc (Blu-ray+)</button>
+      ${any ? `<button class="chip" data-act="clear">Clear</button>` : ""}
+    </div>
+    <div class="count">${shown.length === items.length ? items.length + " movies" : shown.length + " of " + items.length}${kind === "family" ? " · tap one to mark watched" : ""}</div>
+    ${shown.map(x => cardHTML(x, kind)).join("") || `<div class="empty">Nothing matches these filters.</div>`}`;
+  $("#q").addEventListener("input", e => { f.q = e.target.value; saveUI(); clearTimeout(window._qt); window._qt = setTimeout(() => { const pos = e.target.selectionStart; renderList(kind); const el = $("#q"); el.focus(); try { el.setSelectionRange(pos, pos); } catch (er) {} }, 180); });
+  document.querySelectorAll("select[data-f]").forEach(s => s.addEventListener("change", () => { f[s.dataset.f] = s.value; saveUI(); renderList(kind); }));
+}
+function streamTags(m) { return m.s.length ? m.s.map(s => `<span class="tag">${esc(s)}</span>`).join("") : `<span class="tag rent">Rent/buy</span>`; }
+function cardHTML(x, kind) {
+  const m = movie(x.id);
+  const flag = kind === "family" && isFlag(m.note);
+  return `<div class="card" data-open="${esc(x.id)}" data-kind="${kind}">
+    <div class="rank">${x.rank}</div>
+    <div class="body">
+      <div class="tt">${esc(m.t)}</div>
+      <div class="meta">${esc(m.y)} · ${esc(m.r || "NR")} · ${esc(m.g)}</div>
+      <div class="why">${esc(m.why)}</div>
+      <div class="note">${flag ? "<b>Heads up:</b> " : (kind === "solo" ? "Content: " : "Parents: ")}${esc(m.note)}</div>
+      <div class="tags">${x.backfill ? `<span class="tag new">New pick</span>` : ""}${streamTags(m)}<span class="tag disc">${esc(m.disc === "check" ? "Disc: check" : m.disc)}</span></div>
+    </div></div>`;
+}
+function watchedEntries() {
+  const out = [];
+  for (const [id, mk] of Object.entries(S.marks)) {
+    if (!mk || (mk.st !== "w" && mk.st !== "s")) continue;
+    const m = movie(id); if (!m && !mk.t) continue;
+    out.push({ id, t: m ? m.t : mk.t, y: m ? m.y : mk.y, mk, list: mk.list || (CAT && (CAT.solo || []).includes(id) ? "solo" : "family") });
+  }
+  out.sort((a, b) => (b.mk.date === "earlier" ? "0" : b.mk.date || "").localeCompare(a.mk.date === "earlier" ? "0" : a.mk.date || "") || (b.mk.at || 0) - (a.mk.at || 0));
+  const seeds = ((CAT && CAT.seedWatched) || []).filter(s => !mark(s.id)).map(s => ({ id: s.id, t: s.t, y: s.y, seed: s, mk: { date: s.date, note: s.note } }));
+  return { mine: out, seeds };
+}
+function renderWatched() {
+  const { mine, seeds } = watchedEntries();
+  const skipped = Object.entries(S.marks).filter(([id, mk]) => mk && mk.st === "x" && movie(id));
+  const row = (e) => `<div class="card" data-wopen="${esc(e.id)}"><div class="body">
+      <div class="tt">${esc(e.t)} <span class="muted small">${esc(e.y || "")}</span></div>
+      <div class="meta">${esc(e.mk.st === "s" ? "Seen earlier" : fmtDate(e.mk.date))}${e.mk.who ? " · " + esc(e.mk.who) : ""}${e.list === "solo" ? " · Solo" : ""}</div>
+      ${e.mk.stars ? `<div class="stars">${"★".repeat(e.mk.stars)}<span style="color:#444">${"★".repeat(5 - e.mk.stars)}</span></div>` : ""}
+      ${e.mk.note ? `<div class="note">${esc(e.mk.note)}</div>` : ""}</div></div>`;
+  $("#main").innerHTML = demoBanner() +
+    `<div class="count">${mine.length + seeds.length} watched</div>` +
+    (mine.length ? `<div class="sec">In this app</div>` + mine.map(row).join("") : "") +
+    (seeds.length ? `<div class="sec">Before Nov 2026</div>` + seeds.map(row).join("") : "") +
+    (skipped.length ? `<div class="sec">Not interested</div>` + skipped.map(([id]) => `<div class="card" data-wopen="${esc(id)}"><div class="body"><div class="tt">${esc(movie(id).t)} <span class="muted small">${esc(movie(id).y)}</span></div><div class="meta">Tap to bring it back</div></div></div>`).join("") : "");
+}
+function renderSettings() {
+  const tok = token();
+  const masked = tok ? tok.slice(0, 11) + "••••••••" + tok.slice(-4) : "";
+  const fam = listFor("family").length, res = CAT ? (CAT.reserve || []).filter(id => !mark(id)).length : 0;
+  $("#main").innerHTML = `
+    <div class="sec">Sync</div>
+    <div class="box">
+      <div class="small muted">Saves what you watch to the private repo <b>${esc(SYNC.repo)}</b> and loads your full list from it. The token stays on this device only.</div>
+      <label class="f">GitHub token ${tok ? "(saved: " + esc(masked) + ")" : ""}</label>
+      <input class="in" id="tok" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="${tok ? "Paste a new token to replace" : "github_pat_…"}">
+      <label class="f">Data repo</label>
+      <input class="in" id="repo" autocapitalize="off" spellcheck="false" value="${esc(SYNC.repo)}">
+      <div class="row"><button class="btn pri" data-act="tok-save">Save</button><button class="btn" data-act="tok-test">Test sync</button>${tok ? `<button class="btn dan" data-act="tok-forget">Remove token</button>` : ""}</div>
+      <div id="sync-st" class="small muted"></div>
+    </div>
+    <div class="sec">Data</div>
+    <div class="box small">
+      <div>List: ${CAT ? (CAT.demo ? "demo copy" : "your private list") : "not loaded"}${CAT && CAT.updated ? " · updated " + esc(fmtDate(CAT.updated)) : ""}${CAT_ERR ? ` · <span class="syncbad">${esc(CAT_ERR)}</span>` : ""}</div>
+      <div class="muted">Family showing ${fam} · ${res} in the reserve queue</div>
+      <div class="muted">Streaming: ${esc((CAT && CAT.streamingSource) || "JustWatch US")}, as of ${CAT && CAT.streamingAsOf ? esc(fmtDate(CAT.streamingAsOf)) : "?"}. Free = ad-supported apps; Kanopy and Hoopla use a library card.</div>
+      <div class="row"><button class="btn" data-act="refresh">Refresh list</button><button class="btn" data-act="export">Export backup</button></div>
+    </div>
+    <div class="sec">How it works</div>
+    <div class="box small muted">Mark a movie watched, seen already or not interested and the next pick from the reserve slides in, so Family stays at 100. Movie Guide reads your history from the private repo and adds new reserve picks there.</div>`;
+  renderSyncStatus();
+}
+
+/* ---------- sheets ---------- */
+let SHEET = null;
+function openSheet(html) { const sh = $("#sheet"); sh.innerHTML = `<div class="grab"></div>` + html; $("#sheet-bg").style.display = "block"; requestAnimationFrame(() => sh.classList.add("open")); }
+function closeSheet() { $("#sheet").classList.remove("open"); $("#sheet-bg").style.display = "none"; SHEET = null; }
+function openMovie(id, kind) {
+  const m = movie(id); if (!m) return;
+  SHEET = { id, kind, stars: 0, who: kind === "solo" ? "Michael" : "Family" };
+  openSheet(`<h2>${esc(m.t)}</h2><div class="meta">${esc(m.y)} · ${esc(m.r || "NR")} · ${esc(m.g)}</div>
+    <div class="why" style="margin:8px 0">${esc(m.why)}</div>
+    <div class="note">${kind === "solo" ? "Content" : "Parents"}: ${esc(m.note)}</div>
+    <div class="tags" style="margin-top:10px">${streamTags(m)}<span class="tag disc">${esc(m.disc === "check" ? "Disc: check" : m.disc)}</span></div>
+    <div class="small" style="margin-top:8px"><a href="${esc(m.jw)}" target="_blank" rel="noopener">Where to watch on JustWatch ↗</a></div>
+    <div class="row" style="margin-top:14px"><button class="btn pri full" data-act="show-watch">Mark watched</button></div>
+    <div id="wform"></div>
+    <div class="row"><button class="btn full" data-act="seen">Seen already</button><button class="btn full" data-act="notint">Not interested</button></div>`);
+}
+function watchForm(prev) {
+  const p = prev || {};
+  SHEET.stars = p.stars || 0; if (p.who) SHEET.who = p.who;
+  const whoOpts = ["Family", "Michael", "Kids"];
+  return `<label class="f">Date watched</label><input class="in" id="w-date" type="date" value="${esc(p.date && /^\d{4}/.test(p.date) ? p.date : today())}">
+    <label class="f">Who watched</label><div class="row" style="margin:0" id="w-who">${whoOpts.map(w => `<button class="chip${SHEET.who === w ? " on" : ""}" data-act="who" data-v="${w}">${w}</button>`).join("")}</div>
+    <input class="in" id="w-who-x" placeholder="Or type names" style="margin-top:6px" value="${esc(whoOpts.includes(SHEET.who) ? "" : SHEET.who || "")}">
+    <label class="f">Rating</label><div class="starpick" id="w-stars">${[1, 2, 3, 4, 5].map(n => `<button data-act="star" data-v="${n}" class="${n <= SHEET.stars ? "on" : ""}">★</button>`).join("")}</div>
+    <label class="f">Note</label><textarea class="in" id="w-note" rows="2" placeholder="Optional">${esc(p.note || "")}</textarea>
+    <div class="row"><button class="btn pri full" data-act="save-watch">Save</button></div>`;
+}
+function openWatched(id) {
+  const mk = S.marks[id], m = movie(id), seed = ((CAT && CAT.seedWatched) || []).find(s => s.id === id);
+  if (seed && !mark(id)) {
+    SHEET = { id, seed: true };
+    openSheet(`<h2>${esc(seed.t)}</h2><div class="meta">${esc(seed.y)} · ${esc(seed.date)}</div>${seed.note ? `<div class="note">${esc(seed.note)}</div>` : ""}
+      <div class="row"><button class="btn dan full" data-act="hide-seed">Remove from history</button></div>`);
+    return;
+  }
+  if (!mk) return;
+  SHEET = { id, kind: mk.list || "family", stars: mk.stars || 0, who: mk.who || "Family", editing: true };
+  if (mk.st === "x") {
+    openSheet(`<h2>${esc(m.t)}</h2><div class="meta">Marked not interested</div><div class="row"><button class="btn pri full" data-act="unmark">Bring it back</button></div>`);
+    return;
+  }
+  openSheet(`<h2>${esc(m ? m.t : mk.t)}</h2><div class="meta">${esc(m ? m.y : "")} · ${mk.st === "s" ? "Seen earlier" : "Watched " + esc(fmtDate(mk.date))}</div>
+    ${watchForm(mk)}
+    <div class="row"><button class="btn dan full" data-act="unmark">Unwatch (put it back on the list)</button></div>`);
+}
+function setMark(id, val, msg) {
+  const prev = S.marks[id] ? Object.assign({}, S.marks[id]) : null;
+  S.marks[id] = Object.assign({ at: Date.now() }, val);
+  save(); closeSheet(); render();
+  toast(msg, () => { S.marks[id] = prev ? Object.assign(prev, { at: Date.now() }) : { st: null, at: Date.now() }; save(); render(); });
+}
+let toastTimer = null;
+function toast(msg, undo) {
+  const el = $("#toast"); $("#toast-t").textContent = msg; const u = $("#toast-u");
+  u.style.display = undo ? "" : "none"; u.onclick = () => { el.style.display = "none"; undo && undo(); };
+  el.style.display = "flex"; clearTimeout(toastTimer); toastTimer = setTimeout(() => el.style.display = "none", undo ? 6000 : 2500);
+}
+
+/* ---------- events ---------- */
+document.addEventListener("click", e => {
+  const nb = e.target.closest("nav button"); if (nb) { UI.tab = nb.dataset.tab; saveUI(); window.scrollTo(0, 0); render(); return; }
+  if (e.target.id === "sheet-bg") { closeSheet(); return; }
+  const card = e.target.closest("[data-open]"); if (card) { openMovie(card.dataset.open, card.dataset.kind); return; }
+  const wc = e.target.closest("[data-wopen]"); if (wc) { openWatched(wc.dataset.wopen); return; }
+  const a = e.target.closest("[data-act]"); if (!a) return;
+  const act = a.dataset.act, kind = UI.tab, f = UI.f[kind] || {};
+  if (act === "disc") { f.disc = !f.disc; saveUI(); renderList(kind); }
+  else if (act === "clear") { UI.f[kind] = {}; saveUI(); renderList(kind); }
+  else if (act === "show-watch") { $("#wform").innerHTML = watchForm(null); a.parentElement.style.display = "none"; }
+  else if (act === "who") { SHEET.who = a.dataset.v; $("#w-who-x").value = ""; document.querySelectorAll("#w-who .chip").forEach(c => c.classList.toggle("on", c === a)); }
+  else if (act === "star") { const n = +a.dataset.v; SHEET.stars = SHEET.stars === n ? 0 : n; document.querySelectorAll("#w-stars button").forEach(b => b.classList.toggle("on", +b.dataset.v <= SHEET.stars)); }
+  else if (act === "save-watch") {
+    const m = movie(SHEET.id), who = ($("#w-who-x").value || "").trim() || SHEET.who;
+    setMark(SHEET.id, { st: "w", date: $("#w-date").value || today(), who, stars: SHEET.stars || null, note: ($("#w-note").value || "").trim(), list: SHEET.kind, t: m.t, y: m.y }, SHEET.editing ? "Saved" : `Watched: ${m.t}` + (SHEET.kind === "family" ? " · next pick added" : ""));
+  }
+  else if (act === "seen") { const m = movie(SHEET.id); setMark(SHEET.id, { st: "s", date: "earlier", list: SHEET.kind, t: m.t, y: m.y }, `Moved to Watched: ${m.t}`); }
+  else if (act === "notint") { const m = movie(SHEET.id); setMark(SHEET.id, { st: "x", list: SHEET.kind, t: m.t, y: m.y }, `Removed: ${m.t}`); }
+  else if (act === "unmark") { const m = movie(SHEET.id); setMark(SHEET.id, { st: null }, `Back on the list: ${m ? m.t : ""}`); }
+  else if (act === "hide-seed") { const s = CAT.seedWatched.find(x => x.id === SHEET.id); setMark(SHEET.id, { st: "h", t: s.t, y: s.y }, "Removed from history"); }
+  else if (act === "tok-save") syncSaveSettings();
+  else if (act === "tok-test") syncTest();
+  else if (act === "tok-forget") syncForget();
+  else if (act === "refresh") { toast("Refreshing…"); pullState().finally(loadCatalog); }
+  else if (act === "export") exportJSON();
+});
+function exportJSON() {
+  const blob = JSON.stringify({ app: "movies", version: APP_VERSION, exported: new Date().toISOString(), marks: S.marks }, null, 1);
+  const file = new File([blob], "movies-backup-" + today() + ".json", { type: "application/json" });
+  if (navigator.canShare && navigator.canShare({ files: [file] })) { navigator.share({ files: [file] }).catch(() => {}); return; }
+  const url = URL.createObjectURL(file); const l = document.createElement("a"); l.href = url; l.download = file.name; l.click(); setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+
+/* ---------- sync → private GitHub repo ----------
+   Token lives ONLY in localStorage movies_gh_token (never in S, never exported or synced).
+   After a change: debounce 4 s, GET state.json, merge per-id by `at`, PUT if different. Offline or failure: stays dirty, retries on online / open / visibility with backoff. */
+function syncDefaults() { return { repo: DATA_REPO, dirty: false, last: null, err: null, fails: 0 }; }
+let SYNC = Object.assign(syncDefaults(), lsGet(LS.sync, {})), syncTimer = null, syncBusy = false, syncAgain = false;
+function saveSync() { lsSet(LS.sync, SYNC); }
+function syncNoteChange() { SYNC.dirty = true; saveSync(); scheduleSync(4000); }
+function scheduleSync(ms) { clearTimeout(syncTimer); syncTimer = setTimeout(() => syncFlush(false), ms); }
+function b64utf8(s) { const b = new TextEncoder().encode(s); let bin = ""; for (let i = 0; i < b.length; i += 0x8000) bin += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000)); return btoa(bin); }
+function utf8b64(b) { const bin = atob(b.replace(/\s/g, "")); const u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return new TextDecoder().decode(u); }
+function ghReq(method, path, body, opt) {
+  const ctl = new AbortController(); const to = setTimeout(() => ctl.abort(), 15000);
+  const url = `https://api.github.com/repos/${SYNC.repo}${path == null ? "" : "/contents/" + path}`;
+  return fetch(url + (method === "GET" ? "?t=" + Date.now() : ""), { method, cache: "no-store", signal: ctl.signal,
+    headers: Object.assign({ Authorization: "Bearer " + token(), Accept: opt && opt.raw ? "application/vnd.github.raw" : "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" }, body ? { "Content-Type": "application/json" } : {}),
+    body: body ? JSON.stringify(body) : undefined }).finally(() => clearTimeout(to));
+}
+async function ghErr(r) {
+  let m = ""; try { m = (await r.json()).message || ""; } catch (e) {}
+  if (r.status === 401) return new Error("Token rejected (expired or mistyped). Paste a new one.");
+  if (r.status === 403 || r.status === 404) return new Error(`No access to ${SYNC.repo}. The token needs this repo with Contents: Read and write.` + (/rate limit/i.test(m) ? " (rate limited)" : ""));
+  return new Error(`GitHub ${r.status}${m ? ": " + m : ""}`);
+}
+function mergeMarks(remote) {
+  let changed = false;
+  for (const [id, rm] of Object.entries(remote || {})) { const lm = S.marks[id]; if (!lm || (rm.at || 0) > (lm.at || 0)) { S.marks[id] = rm; changed = true; } }
+  return changed;
+}
+function stateDoc() {
+  const watched = Object.entries(S.marks).filter(([, m]) => m && (m.st === "w" || m.st === "s")).map(([id, m]) => ({ id, t: m.t, y: m.y, date: m.date, who: m.who || null, stars: m.stars || null, note: m.note || "", list: m.list || "family", seen: m.st === "s" }));
+  const notInterested = Object.entries(S.marks).filter(([, m]) => m && m.st === "x").map(([id, m]) => ({ id, t: m.t, y: m.y, list: m.list || "family" }));
+  return { app: "movies", version: APP_VERSION, schema: 1, marks: S.marks, watched, notInterested };
+}
+async function getRemoteState() {
+  const g = await ghReq("GET", "state.json");
+  if (g.status === 404) return { sha: null, doc: null };
+  if (!g.ok) throw await ghErr(g);
+  const j = await g.json(); return { sha: j.sha, doc: JSON.parse(utf8b64(j.content || "") || "{}"), b64: (j.content || "").replace(/\s/g, "") };
+}
+async function pullState() {
+  if (!token() || !navigator.onLine) return;
+  try { const { doc } = await getRemoteState(); if (doc && mergeMarks(doc.marks)) { lsSet(LS.state, S); render(); } } catch (e) { SYNC.err = e.message; saveSync(); }
+}
+async function syncFlush(force) {
+  if (syncBusy) { syncAgain = true; return; }
+  if (!token()) { renderSyncStatus(); return; }
+  if (!SYNC.dirty && !force) { renderSyncStatus(); return; }
+  if (!navigator.onLine) { SYNC.err = "Offline. Will sync when you're back online."; saveSync(); renderSyncStatus(); return; }
+  syncBusy = true; renderSyncStatus("Syncing…");
+  try {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const rs = await getRemoteState();
+      if (rs.doc && mergeMarks(rs.doc.marks)) { lsSet(LS.state, S); render(); }
+      SYNC.dirty = false; saveSync();
+      const body = JSON.stringify(Object.assign(stateDoc(), { exported: new Date().toISOString() }), null, 1) + "\n";
+      if (rs.doc && JSON.stringify(rs.doc.marks || {}) === JSON.stringify(S.marks)) break;   // remote already has everything
+      const p = await ghReq("PUT", "state.json", Object.assign({ message: "sync " + today(), content: b64utf8(body) }, rs.sha ? { sha: rs.sha } : {}));
+      if (p.ok) break;
+      if (p.status === 409 || p.status === 422) { SYNC.dirty = true; await new Promise(r => setTimeout(r, 400 * (attempt + 1))); continue; }
+      SYNC.dirty = true; throw await ghErr(p);
+    }
+    SYNC.last = Date.now(); SYNC.err = null; SYNC.fails = 0;
+  } catch (e) {
+    SYNC.dirty = true;
+    SYNC.err = e && e.name === "AbortError" ? "GitHub didn't answer (timeout). Will retry." : (e && e.message) || String(e); SYNC.fails = (SYNC.fails || 0) + 1;
+    scheduleSync(Math.min(15 * 60000, 30000 * Math.pow(2, SYNC.fails - 1)));
+  } finally { saveSync(); syncBusy = false; renderSyncStatus(); if (syncAgain) { syncAgain = false; scheduleSync(1000); } }
+}
+function syncStatusText() {
+  if (!token()) return "Off · no token on this device (demo list)";
+  if (SYNC.err) return SYNC.err;
+  if (SYNC.dirty) return "Changes waiting to sync";
+  return SYNC.last ? "Last synced " + new Date(SYNC.last).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : "On · nothing synced yet";
+}
+function renderSyncStatus(busy) { const el = $("#sync-st"); if (el) { el.textContent = busy || syncStatusText(); el.className = "small " + (SYNC.err && !busy ? "syncbad" : "muted"); } }
+async function syncTest() {
+  if (!token()) { toast("Paste your token and tap Save first"); return; }
+  renderSyncStatus("Checking access…");
+  try {
+    const r = await ghReq("GET", null); if (!r.ok) throw await ghErr(r);
+    const j = await r.json();
+    if (j.permissions && j.permissions.push === false) throw new Error(`Token can read ${SYNC.repo} but not write. Set Contents to Read and write.`);
+    if (j.private === false) toast("Heads up: this repo is public");
+    SYNC.err = null; await syncFlush(true); await loadCatalog();
+    toast(SYNC.err ? "Sync failed: see Settings" : "Sync works ✓");
+  } catch (e) { SYNC.err = (e && e.message) || String(e); saveSync(); renderSyncStatus(); toast("Sync failed: see Settings"); }
+}
+function syncSaveSettings() {
+  const t = ($("#tok").value || "").trim(), rp = ($("#repo").value || "").trim().replace(/^https?:\/\/github\.com\//, "").replace(/\.git$/, "");
+  if (rp && !/^[\w.-]+\/[\w.-]+$/.test(rp)) { toast("Repo looks like owner/name"); return; }
+  if (t) localStorage.setItem(LS.token, t);
+  if (rp) SYNC.repo = rp;
+  SYNC.err = null; SYNC.fails = 0; SYNC.dirty = true; saveSync();
+  toast("Saved. Loading your list…"); render();
+  pullState().then(loadCatalog).then(() => syncFlush(true));
+}
+function syncForget() { localStorage.removeItem(LS.token); localStorage.removeItem(LS.cat); CAT = null; SYNC.err = null; saveSync(); toast("Token removed from this device"); loadCatalog(); }
+window.addEventListener("online", () => { SYNC.err = null; syncFlush(false); });
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") { pullState(); syncFlush(false); } else syncFlush(false); });
+
+/* ---------- boot ---------- */
+render();
+pullState().finally(() => { loadCatalog(); if (SYNC.dirty) scheduleSync(1500); });
+if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+</script>
+</body>
+</html>

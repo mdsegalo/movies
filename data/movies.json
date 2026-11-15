@@ -1,0 +1,244 @@
+{
+ "schema": 1,
+ "updated": "2026-11-14",
+ "streamingAsOf": "2026-11-14",
+ "streamingSource": "JustWatch US (subscription, free and library apps; rent/buy not listed)",
+ "familySize": 8,
+ "family": [
+  "raiders-of-the-lost-ark-1981",
+  "jurassic-park-1993",
+  "ghostbusters-1984",
+  "star-wars-a-new-hope-1977",
+  "the-empire-strikes-back-1980",
+  "return-of-the-jedi-1983",
+  "indiana-jones-and-the-last-crusade-1989",
+  "ferris-bueller-s-day-off-1986"
+ ],
+ "reserve": [
+  "indiana-jones-and-the-temple-of-doom-1984",
+  "close-encounters-of-the-third-kind-1977",
+  "star-trek-ii-the-wrath-of-khan-1982"
+ ],
+ "solo": [
+  "the-shawshank-redemption-1994",
+  "the-godfather-1972",
+  "the-godfather-part-ii-1974"
+ ],
+ "soloReserve": [],
+ "seedWatched": [
+  {
+   "id": "seed-demo-movie-1999",
+   "t": "Demo Movie",
+   "y": "1999",
+   "date": "Before Nov 2026",
+   "note": "Demo data"
+  }
+ ],
+ "catalog": {
+  "raiders-of-the-lost-ark-1981": {
+   "id": "raiders-of-the-lost-ark-1981",
+   "t": "Raiders of the Lost Ark",
+   "y": 1981,
+   "r": "PG",
+   "g": "Adventure",
+   "why": "Pure 80s adventure; Ethan Hunt energy with a whip.",
+   "note": "Melting-face finale is intense; clean otherwise",
+   "s": [
+    "Prime Video",
+    "Paramount+"
+   ],
+   "disc": "4K UHD",
+   "jw": "https://www.justwatch.com/us/movie/indiana-jones-and-the-raiders-of-the-lost-ark"
+  },
+  "jurassic-park-1993": {
+   "id": "jurassic-park-1993",
+   "t": "Jurassic Park",
+   "y": 1993,
+   "r": "PG-13",
+   "g": "Sci-Fi",
+   "why": "Spielberg spectacle; dinos still look real.",
+   "note": "Intense dino attacks; mild language",
+   "s": [
+    "Starz"
+   ],
+   "disc": "4K UHD",
+   "jw": "https://www.justwatch.com/us/movie/jurassic-park-i"
+  },
+  "ghostbusters-1984": {
+   "id": "ghostbusters-1984",
+   "t": "Ghostbusters",
+   "y": 1984,
+   "r": "PG",
+   "g": "Comedy",
+   "why": "80s comedy royalty; Spaceballs-level quotable.",
+   "note": "Language, innuendo; brief ghost-dream gag, easy skip",
+   "s": [
+    "Hulu"
+   ],
+   "disc": "4K UHD",
+   "jw": "https://www.justwatch.com/us/movie/ghostbusters-1"
+  },
+  "star-wars-a-new-hope-1977": {
+   "id": "star-wars-a-new-hope-1977",
+   "t": "Star Wars: A New Hope",
+   "y": 1977,
+   "r": "PG",
+   "g": "Sci-Fi",
+   "why": "Where the space-adventure love starts.",
+   "note": "Clean; sci-fi violence",
+   "s": [
+    "Disney+"
+   ],
+   "disc": "4K UHD",
+   "jw": "https://www.justwatch.com/us/movie/star-wars-episode-iv-a-new-hope"
+  },
+  "the-empire-strikes-back-1980": {
+   "id": "the-empire-strikes-back-1980",
+   "t": "The Empire Strikes Back",
+   "y": 1980,
+   "r": "PG",
+   "g": "Sci-Fi",
+   "why": "The best sequel ever made, per many.",
+   "note": "Clean; sci-fi violence",
+   "s": [
+    "Disney+"
+   ],
+   "disc": "4K UHD",
+   "jw": "https://www.justwatch.com/us/movie/star-wars-episode-v-the-empire-strikes-back"
+  },
+  "return-of-the-jedi-1983": {
+   "id": "return-of-the-jedi-1983",
+   "t": "Return of the Jedi",
+   "y": 1983,
+   "r": "PG",
+   "g": "Sci-Fi",
+   "why": "Finish the trilogy.",
+   "note": "Jabba slave outfit scenes; otherwise clean",
+   "s": [
+    "Disney+"
+   ],
+   "disc": "4K UHD",
+   "jw": "https://www.justwatch.com/us/movie/star-wars-episode-vi-return-of-the-jedi"
+  },
+  "indiana-jones-and-the-last-crusade-1989": {
+   "id": "indiana-jones-and-the-last-crusade-1989",
+   "t": "Indiana Jones and the Last Crusade",
+   "y": 1989,
+   "r": "PG-13",
+   "g": "Adventure",
+   "why": "Indy plus Sean Connery, a bridge from Bond.",
+   "note": "Brief implied romance, no nudity; mild language",
+   "s": [
+    "Prime Video",
+    "Paramount+"
+   ],
+   "disc": "4K UHD",
+   "jw": "https://www.justwatch.com/us/movie/indiana-jones-3"
+  },
+  "ferris-bueller-s-day-off-1986": {
+   "id": "ferris-bueller-s-day-off-1986",
+   "t": "Ferris Bueller's Day Off",
+   "y": 1986,
+   "r": "PG-13",
+   "g": "Comedy",
+   "why": "The ultimate 80s skip-school comedy.",
+   "note": "Language; brief innuendo",
+   "s": [
+    "Paramount+",
+    "AMC+",
+    "Kanopy",
+    "Hoopla"
+   ],
+   "disc": "4K UHD",
+   "jw": "https://www.justwatch.com/us/movie/ferris-buellers-day-off"
+  },
+  "indiana-jones-and-the-temple-of-doom-1984": {
+   "id": "indiana-jones-and-the-temple-of-doom-1984",
+   "t": "Indiana Jones and the Temple of Doom",
+   "y": 1984,
+   "r": "PG",
+   "g": "Adventure",
+   "why": "More Indy; wild mine-cart chase.",
+   "note": "Darker: heart-removal ritual scene is intense; no sex",
+   "s": [
+    "Prime Video",
+    "Paramount+"
+   ],
+   "disc": "Blu-ray",
+   "jw": "https://www.justwatch.com/us/movie/indiana-jones-and-the-temple-of-doom"
+  },
+  "close-encounters-of-the-third-kind-1977": {
+   "id": "close-encounters-of-the-third-kind-1977",
+   "t": "Close Encounters of the Third Kind",
+   "y": 1977,
+   "r": "PG",
+   "g": "Sci-Fi",
+   "why": "Spielberg first-contact classic for Interstellar fans.",
+   "note": "Mild language; tense abduction scene",
+   "s": [
+    "Free"
+   ],
+   "disc": "4K UHD",
+   "jw": "https://www.justwatch.com/us/movie/close-encounters-of-the-third-kind"
+  },
+  "star-trek-ii-the-wrath-of-khan-1982": {
+   "id": "star-trek-ii-the-wrath-of-khan-1982",
+   "t": "Star Trek II: The Wrath of Khan",
+   "y": 1982,
+   "r": "PG",
+   "g": "Sci-Fi",
+   "why": "The best Trek; a naval duel in space.",
+   "note": "Ear-eel scene is creepy; violence",
+   "s": [
+    "Paramount+",
+    "Kanopy"
+   ],
+   "disc": "4K UHD",
+   "jw": "https://www.justwatch.com/us/movie/star-trek-ii-the-wrath-of-khan"
+  },
+  "the-shawshank-redemption-1994": {
+   "id": "the-shawshank-redemption-1994",
+   "t": "The Shawshank Redemption",
+   "y": 1994,
+   "r": "R",
+   "g": "Drama",
+   "why": "IMDb's top-rated film.",
+   "note": "Prison violence, sexual assault implied, language",
+   "s": [
+    "MGM+"
+   ],
+   "disc": "4K UHD",
+   "jw": "https://www.justwatch.com/us/movie/the-shawshank-redemption"
+  },
+  "the-godfather-1972": {
+   "id": "the-godfather-1972",
+   "t": "The Godfather",
+   "y": 1972,
+   "r": "R",
+   "g": "Drama",
+   "why": "The essential crime saga.",
+   "note": "Violence; brief nudity",
+   "s": [
+    "Paramount+",
+    "MGM+"
+   ],
+   "disc": "4K UHD",
+   "jw": "https://www.justwatch.com/us/movie/the-godfather-part-i"
+  },
+  "the-godfather-part-ii-1974": {
+   "id": "the-godfather-part-ii-1974",
+   "t": "The Godfather Part II",
+   "y": 1974,
+   "r": "R",
+   "g": "Drama",
+   "why": "Maybe better than the first.",
+   "note": "Violence",
+   "s": [
+    "Paramount+"
+   ],
+   "disc": "4K UHD",
+   "jw": "https://www.justwatch.com/us/movie/the-godfather-part-ii"
+  }
+ },
+ "demo": true
+}
