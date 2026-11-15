@@ -85,7 +85,7 @@ a{color:var(--acc)}
 <div class="toast" id="toast"><span id="toast-t"></span><button id="toast-u" style="display:none">Undo</button></div>
 <script>
 "use strict";
-const APP_VERSION = "1.1.2";
+const APP_VERSION = "1.2.0";
 const LS = { state: "movies_state", cat: "movies_cat", sync: "movies_sync", token: "movies_gh_token", ui: "movies_ui" };
 const DATA_REPO = "mdsegalo/movies-data";
 const $ = s => document.querySelector(s);
@@ -223,23 +223,32 @@ function watchedEntries() {
   for (const [id, mk] of Object.entries(S.marks)) {
     if (!mk || (mk.st !== "w" && mk.st !== "s")) continue;
     const m = movie(id); if (!m && !mk.t) continue;
-    out.push({ id, t: m ? m.t : mk.t, y: m ? m.y : mk.y, mk, list: mk.list || (CAT && (CAT.solo || []).includes(id) ? "solo" : "family") });
+    out.push({ id, t: m ? m.t : mk.t, y: m ? m.y : mk.y, mk, list: listOf(id, mk) });
   }
   out.sort((a, b) => (b.mk.date === "earlier" ? "0" : b.mk.date || "").localeCompare(a.mk.date === "earlier" ? "0" : a.mk.date || "") || (b.mk.at || 0) - (a.mk.at || 0));
   const seeds = ((CAT && CAT.seedWatched) || []).filter(s => !mark(s.id)).map(s => ({ id: s.id, t: s.t, y: s.y, seed: s, mk: { date: s.date, note: s.note } }));
   return { mine: out, seeds };
 }
+/* Which list a mark belongs to: the saved choice, else the source list (solo / soloReserve = Solo; family, reserve, history = Family). */
+function listOf(id, mk) {
+  if (mk && (mk.list === "solo" || mk.list === "family")) return mk.list;
+  return CAT && ((CAT.solo || []).includes(id) || (CAT.soloReserve || []).includes(id)) ? "solo" : "family";
+}
 function renderWatched() {
-  const { mine, seeds } = watchedEntries();
-  const skipped = Object.entries(S.marks).filter(([id, mk]) => mk && mk.st === "x" && movie(id));
+  const wf = UI.wf || "all", keep = l => wf === "all" || wf === l;
+  const all = watchedEntries();
+  const mine = all.mine.filter(e => keep(e.list)), seeds = all.seeds.filter(() => keep("family"));
+  const skipped = Object.entries(S.marks).filter(([id, mk]) => mk && mk.st === "x" && movie(id) && keep(listOf(id, mk)));
+  const cnt = l => all.mine.filter(e => l === "all" || e.list === l).length + (l === "solo" ? 0 : all.seeds.length);
   const row = (e) => `<div class="card" data-wopen="${esc(e.id)}"><div class="body">
       <div class="tt">${esc(e.t)} <span class="muted small">${esc(e.y || "")}</span></div>
-      <div class="meta">${esc(e.mk.st === "s" ? "Seen earlier" : fmtDate(e.mk.date))}${e.mk.who ? " · " + esc(e.mk.who) : ""}${e.list === "solo" ? " · Solo" : ""}</div>
+      <div class="meta">${esc(e.mk.st === "s" ? "Seen earlier" : fmtDate(e.mk.date))}${e.mk.who ? " · " + esc(e.mk.who) : ""}${e.seed ? "" : " · " + (e.list === "solo" ? "Solo" : "Family")}</div>
       ${e.mk.stars ? `<div class="stars">${"★".repeat(e.mk.stars)}<span style="color:#444">${"★".repeat(5 - e.mk.stars)}</span></div>` : ""}
       ${e.mk.note ? `<div class="note">${esc(e.mk.note)}</div>` : ""}
       ${movie(e.id) ? `<div class="tags">${streamTags(movie(e.id))}<span class="tag disc">${esc(movie(e.id).disc === "check" ? "Disc: check" : movie(e.id).disc)}</span></div>` : ""}</div></div>`;
   $("#main").innerHTML = demoBanner() +
-    `<div class="count">${mine.length + seeds.length} watched</div>` +
+    `<div class="filters" style="margin-top:8px">${[["all", "All"], ["family", "Family"], ["solo", "Solo"]].map(([v, l]) => `<button class="chip${wf === v ? " on" : ""}" data-act="wf" data-v="${v}">${l} (${cnt(v)})</button>`).join("")}</div>` +
+    `<div class="count">${mine.length + seeds.length} watched${wf === "all" ? "" : " · " + (wf === "solo" ? "Solo" : "Family")}</div>` +
     (mine.length ? `<div class="sec">In this app</div>` + mine.map(row).join("") : "") +
     (seeds.length ? `<div class="sec">Before Nov 2026</div>` + seeds.map(row).join("") : "") +
     (skipped.length ? `<div class="sec">Not interested</div>` + skipped.map(([id]) => `<div class="card" data-wopen="${esc(id)}"><div class="body"><div class="tt">${esc(movie(id).t)} <span class="muted small">${esc(movie(id).y)}</span></div><div class="meta">Tap to bring it back</div></div></div>`).join("") : "");
@@ -292,6 +301,7 @@ function watchForm(prev) {
   SHEET.stars = p.stars || 0; if (p.who) SHEET.who = p.who;
   const whoOpts = ["Family", "Michael", "Kids"];
   return `<label class="f">Date watched</label><input class="in" id="w-date" type="date" value="${esc(p.date && /^\d{4}/.test(p.date) ? p.date : (p.st === "s" ? "" : today()))}">${p.st === "s" ? `<div class="small muted" style="margin-top:4px">Leave blank to keep it as seen earlier.</div>` : ""}
+    <label class="f">List</label><div class="row" style="margin:0" id="w-list">${[["family", "Family"], ["solo", "Solo"]].map(([v, l]) => `<button class="chip${SHEET.kind === v ? " on" : ""}" data-act="wlist" data-v="${v}">${l}</button>`).join("")}</div>
     <label class="f">Who watched</label><div class="row" style="margin:0" id="w-who">${whoOpts.map(w => `<button class="chip${SHEET.who === w ? " on" : ""}" data-act="who" data-v="${w}">${w}</button>`).join("")}</div>
     <input class="in" id="w-who-x" placeholder="Or type names" style="margin-top:6px" value="${esc(whoOpts.includes(SHEET.who) ? "" : SHEET.who || "")}">
     <label class="f">Rating</label><div class="starpick" id="w-stars">${[1, 2, 3, 4, 5].map(n => `<button data-act="star" data-v="${n}" class="${n <= SHEET.stars ? "on" : ""}">★</button>`).join("")}</div>
@@ -318,7 +328,7 @@ function openWatched(id) {
     return;
   }
   if (!mk) return;
-  SHEET = { id, kind: mk.list || "family", stars: mk.stars || 0, who: mk.who || "Family", editing: true };
+  SHEET = { id, kind: listOf(id, mk), stars: mk.stars || 0, who: mk.who || "Family", editing: true };
   if (mk.st === "x") {
     openSheet(`<h2>${esc(m.t)}</h2><div class="meta">${esc(m.y)} · ${esc(m.r || "NR")} · Marked not interested</div>${infoHTML(m)}${whereHTML(m, "Where to watch")}<div class="row" style="margin-top:14px"><button class="btn pri full" data-act="unmark">Bring it back</button></div>`);
     return;
@@ -351,6 +361,8 @@ document.addEventListener("click", e => {
   const a = e.target.closest("[data-act]"); if (!a) return;
   const act = a.dataset.act, kind = UI.tab, f = UI.f[kind] || {};
   if (act === "close") { closeSheet(); return; }
+  if (act === "wf") { UI.wf = a.dataset.v; saveUI(); renderWatched(); return; }
+  if (act === "wlist") { SHEET.kind = a.dataset.v; document.querySelectorAll("#w-list .chip").forEach(c => c.classList.toggle("on", c === a)); if (!$("#w-who-x").value && (SHEET.who === "Family" || SHEET.who === "Michael")) { SHEET.who = SHEET.kind === "solo" ? "Michael" : "Family"; document.querySelectorAll("#w-who .chip").forEach(c => c.classList.toggle("on", c.dataset.v === SHEET.who)); } return; }
   if (act === "disc") { f.disc = !f.disc; saveUI(); renderList(kind); }
   else if (act === "clear") { UI.f[kind] = {}; saveUI(); renderList(kind); }
   else if (act === "show-watch") { $("#wform").innerHTML = watchForm(null); a.parentElement.style.display = "none"; }
@@ -407,8 +419,8 @@ function mergeMarks(remote) {
   return changed;
 }
 function stateDoc() {
-  const watched = Object.entries(S.marks).filter(([, m]) => m && (m.st === "w" || m.st === "s")).map(([id, m]) => ({ id, t: m.t, y: m.y, date: m.date, who: m.who || null, stars: m.stars || null, note: m.note || "", list: m.list || "family", seen: m.st === "s" }));
-  const notInterested = Object.entries(S.marks).filter(([, m]) => m && m.st === "x").map(([id, m]) => ({ id, t: m.t, y: m.y, list: m.list || "family" }));
+  const watched = Object.entries(S.marks).filter(([, m]) => m && (m.st === "w" || m.st === "s")).map(([id, m]) => ({ id, t: m.t, y: m.y, date: m.date, who: m.who || null, stars: m.stars || null, note: m.note || "", list: listOf(id, m), seen: m.st === "s" }));
+  const notInterested = Object.entries(S.marks).filter(([, m]) => m && m.st === "x").map(([id, m]) => ({ id, t: m.t, y: m.y, list: listOf(id, m) }));
   return { app: "movies", version: APP_VERSION, schema: 1, marks: S.marks, watched, notInterested };
 }
 async function getRemoteState() {
