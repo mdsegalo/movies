@@ -85,7 +85,7 @@ a{color:var(--acc)}
 <div class="toast" id="toast"><span id="toast-t"></span><button id="toast-u" style="display:none">Undo</button></div>
 <script>
 "use strict";
-const APP_VERSION = "1.1.1";
+const APP_VERSION = "1.1.2";
 const LS = { state: "movies_state", cat: "movies_cat", sync: "movies_sync", token: "movies_gh_token", ui: "movies_ui" };
 const DATA_REPO = "mdsegalo/movies-data";
 const $ = s => document.querySelector(s);
@@ -291,7 +291,7 @@ function watchForm(prev) {
   const p = prev || {};
   SHEET.stars = p.stars || 0; if (p.who) SHEET.who = p.who;
   const whoOpts = ["Family", "Michael", "Kids"];
-  return `<label class="f">Date watched</label><input class="in" id="w-date" type="date" value="${esc(p.date && /^\d{4}/.test(p.date) ? p.date : today())}">
+  return `<label class="f">Date watched</label><input class="in" id="w-date" type="date" value="${esc(p.date && /^\d{4}/.test(p.date) ? p.date : (p.st === "s" ? "" : today()))}">${p.st === "s" ? `<div class="small muted" style="margin-top:4px">Leave blank to keep it as seen earlier.</div>` : ""}
     <label class="f">Who watched</label><div class="row" style="margin:0" id="w-who">${whoOpts.map(w => `<button class="chip${SHEET.who === w ? " on" : ""}" data-act="who" data-v="${w}">${w}</button>`).join("")}</div>
     <input class="in" id="w-who-x" placeholder="Or type names" style="margin-top:6px" value="${esc(whoOpts.includes(SHEET.who) ? "" : SHEET.who || "")}">
     <label class="f">Rating</label><div class="starpick" id="w-stars">${[1, 2, 3, 4, 5].map(n => `<button data-act="star" data-v="${n}" class="${n <= SHEET.stars ? "on" : ""}">★</button>`).join("")}</div>
@@ -358,7 +358,8 @@ document.addEventListener("click", e => {
   else if (act === "star") { const n = +a.dataset.v; SHEET.stars = SHEET.stars === n ? 0 : n; document.querySelectorAll("#w-stars button").forEach(b => b.classList.toggle("on", +b.dataset.v <= SHEET.stars)); }
   else if (act === "save-watch") {
     const m = movie(SHEET.id), who = ($("#w-who-x").value || "").trim() || SHEET.who;
-    setMark(SHEET.id, { st: "w", date: $("#w-date").value || today(), who, stars: SHEET.stars || null, note: ($("#w-note").value || "").trim(), list: SHEET.kind, t: m.t, y: m.y }, SHEET.editing ? "Saved" : `Watched: ${m.t}` + (SHEET.kind === "family" ? " · next pick added" : ""));
+    const keepSeen = SHEET.editing && S.marks[SHEET.id] && S.marks[SHEET.id].st === "s" && !$("#w-date").value;
+    setMark(SHEET.id, { st: keepSeen ? "s" : "w", date: keepSeen ? "earlier" : ($("#w-date").value || today()), who, stars: SHEET.stars || null, note: ($("#w-note").value || "").trim(), list: SHEET.kind, t: m.t, y: m.y }, SHEET.editing ? "Saved" : `Watched: ${m.t}` + (SHEET.kind === "family" ? " · next pick added" : ""));
   }
   else if (act === "seen") { const m = movie(SHEET.id); setMark(SHEET.id, { st: "s", date: "earlier", list: SHEET.kind, t: m.t, y: m.y }, `Moved to Watched: ${m.t}`); }
   else if (act === "notint") { const m = movie(SHEET.id); setMark(SHEET.id, { st: "x", list: SHEET.kind, t: m.t, y: m.y }, `Removed: ${m.t}`); }
